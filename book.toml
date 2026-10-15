@@ -1,0 +1,4 @@
+[book]
+title = "My Book"
+description = "A basic displayable mdBook boilerplate."
+authors = ["Your Name"]
