@@ -1,2 +1,5 @@
 [tools]
 mdbook = "latest"
+
+[tasks]
+build = "mdbook build"

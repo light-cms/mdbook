@@ -1,24 +1,46 @@
-name: ci
+name: github pages
 
 on:
-  workflow_dispatch:
-  pull_request:
   push:
-    tags: ["*"]
-    branches: ["main"]
+    branches:
+      - main
+  workflow_dispatch:
+  repository_dispatch:
+    types: [content_update, blog_update]
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
-env:
-  MISE_EXPERIMENTAL: true
+permissions:
+  contents: read
+  pages: write
+  id-token: write
 
 jobs:
-  ci:
+  deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    container:
+      image: ghcr.io/jdx/mise:2026.9.6
     steps:
-      - uses: actions/checkout@v6
-      - uses: jdx/mise-action@v3
-      - run: mise run ci
+      - name: checkout code
+        uses: actions/checkout@main
+      - name: cache mise dependencies
+        uses: actions/cache@main
+        with:
+          path: |
+            ~/.local/share/mise/installs
+            ~/.local/share/mise/cache
+          key: mise-${{ runner.os }}-${{ hashFiles('mise.toml') }}
+          restore-keys: |
+            mise-${{ runner.os }}-
+      - name: Build
+        run: |
+            mise trust
+            mise deps
+            mise run build
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@main
+        with:
+          path: ./book
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@main
